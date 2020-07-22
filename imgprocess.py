@@ -201,37 +201,57 @@ def img_resize(infile, outfile, width=1400, height=1400):
     except Exception as e:
         print(e)
 
+def img_seg(dir):
+    files = os.listdir(dir)
+    for file in files:
+        a, b = os.path.splitext(file)
+        img = image.open(os.path.join(dir + "/" + file))
+        hight, width = img.size
+        w = 128
+        id = 1
+        i = 0
+        while (i + w <= hight):
+            j = 0
+            while (j + w <= width):
+                new_img = img.crop((i, j, i + w, j + w))
+                # rename = "D:\\labelme\\images\\"
+                rename = "data/seg/"
+                new_img.save(rename + a + "_" + str(id) + b)
+                id += 1
+                j += w
+            i = i + w
 
-# image segmentation
-def img_segmentation(originalfile, clusterfile, outdir):
-    imgname = os.path.basename(originalfile).split('.')[0]
-    imgin = cv2.imread(clusterfile)
-    gray = cv2.cvtColor(imgin, cv2.COLOR_RGB2GRAY)
-    ret, dst = cv2.threshold(gray, 55, 255, cv2.THRESH_BINARY)
-    dst1 = cv2.morphologyEx(dst, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
-    # cv2.imwrite(outdir + "\\" + imgname + "_dst1.jpg", dst1)
-    dst2 = cv2.morphologyEx(dst1, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    # cv2.imwrite(outdir + "\\" + imgname + "_dst2.jpg", dst2)
-    contours, hierarchy = cv2.findContours(dst2, 1, 5)
-    # cv2.imwrite(outdir + "\\" + imgname + "_binary.jpg", binary)
-    i = 0
-    a = 0
-    img2 = cv2.imread(originalfile)
-    img1 = img2.copy()
-    if not os.path.isdir(outdir):
-        os.makedirs(outdir)
-    for cnt in contours:
-        M = cv2.moments(cnt)
-        i += 1
-        area = cv2.contourArea(cnt)
-        # print(area)
-        # if area<100:
-        #     continue
-        x, y, w, h = cv2.boundingRect(cnt)
-        img1 = cv2.rectangle(img1, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 0, 255), 1)
-        newimage = img2[y - 5:y + h + 5, x - 5:x + w + 5]
-        cv2.imwrite(outdir + "\\" + imgname + "_" + str(i) + ".jpg", newimage)
-    cv2.imwrite(outdir + "\\" + imgname + "_draw.jpg", img1)
+# # image segmentation
+# def img_segmentation(originalfile, clusterfile, outdir):
+#     imgname = os.path.basename(originalfile).split('.')[0]
+#     imgin = cv2.imread(clusterfile)
+#     gray = cv2.cvtColor(imgin, cv2.COLOR_RGB2GRAY)
+#     ret, dst = cv2.threshold(gray, 55, 255, cv2.THRESH_BINARY)
+#     dst1 = cv2.morphologyEx(dst, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+#     # cv2.imwrite(outdir + "\\" + imgname + "_dst1.jpg", dst1)
+#     dst2 = cv2.morphologyEx(dst1, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+#     # cv2.imwrite(outdir + "\\" + imgname + "_dst2.jpg", dst2)
+#     contours, hierarchy = cv2.findContours(dst2, 1, 5)
+#
+#     # cv2.imwrite(outdir + "\\" + imgname + "_binary.jpg", binary)
+#     i = 0
+#     a = 0
+#     img2 = cv2.imread(originalfile)
+#     img1 = img2.copy()
+#     if not os.path.isdir(outdir):
+#         os.makedirs(outdir)
+#     for cnt in contours:
+#         M = cv2.moments(cnt)
+#         i += 1
+#         area = cv2.contourArea(cnt)
+#         # print(area)
+#         # if area<100:
+#         #     continue
+#         x, y, w, h = cv2.boundingRect(cnt)
+#         img1 = cv2.rectangle(img1, (x - 5, y - 5), (x + w + 5, y + h + 5), (0, 0, 255), 1)
+#         newimage = img2[y - 5:y + h + 5, x - 5:x + w + 5]
+#         cv2.imwrite(outdir + "\\" + imgname + "_" + str(i) + ".jpg", newimage)
+#     cv2.imwrite(outdir + "\\" + imgname + "_draw.jpg", img1)
 
 
 # image standardization
@@ -282,14 +302,18 @@ def img_standardization(infile, outfile, width=100, height=100):
 
 
 if __name__ == '__main__':
-    img_resize(r'data/2.jpg', r'data/2_resize.jpg', 700, 700)
-    img = cv2.imread(r'data/2_resize.jpg')
+    img_resize(r'data/6.jpg', r'data/6_resize.jpg', 400, 400)
+    img = cv2.imread(r'data/6_resize.jpg')
+    img2 = cv2.imread(r'data/seg/6_resize.jpg')
+
+   # img_standardization(r'data/2_resize.jpg', r'data/2_newresize.jpg', width=100, height=100)
     # enhance
     img_enhance = img_enhance(img)
     # denoising
     # img_denoising = img_denoising(img_enhance)
     out = gaussian_filter(img_enhance, K_size=3, sigma=1.3)
-    cv2.imwrite(r'data/2_enhance.jpg', img_enhance)
+    cv2.imwrite(r'data/6_enhance.jpg', img_enhance)
+    img_seg(r'data/seg')
     # cv2.imwrite(r'data/2_denoising.jpg', out)
 
     # # glcm
@@ -300,13 +324,13 @@ if __name__ == '__main__':
     # cv2.imwrite("data/mean_glcm.jpg", mean*255)
 
     # image cluster
-    img_cluster(r'data/2_enhance.jpg', r'data/2_cluster.jpg')
-    imgcluster = cv2.imread(r'data/2_cluster.jpg')
+    img_cluster(r'data/6_enhance.jpg', r'data/6_cluster.jpg')
+    imgcluster = cv2.imread(r'data/6_cluster.jpg')
     # image add 10px border
     Blackbox = Black_box(img)
-    cv2.imwrite(r'data/2_blackbox.jpg', Blackbox)
+    cv2.imwrite(r'data/6_blackbox.jpg', Blackbox)
     whitebox = White_box(imgcluster)
-    cv2.imwrite(r'data/2_whitebox.jpg', whitebox)
+    cv2.imwrite(r'data/6_whitebox.jpg', whitebox)
     # image segmentation
-    img_segmentation(r'data/2_blackbox.jpg',r'data/2_whitebox.jpg', r'data/cut/')
+    # img_segmentation(r'data/7_blackbox.jpg',r'data/7_whitebox.jpg', r'data/cut/')
     #img_segmentation(r'data/1_blackbox.jpg', r'data/1_whitebox.jpg', r'data/cut/')
